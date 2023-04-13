@@ -1,9 +1,13 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:async';
 
+import 'package:bug_buzzer/command.dart';
 import 'package:bug_buzzer/grid.dart';
 import 'package:bug_buzzer/log.dart';
 import 'package:bug_buzzer/message.dart';
 import 'package:bug_buzzer/single_multicast.dart';
+import 'package:bug_buzzer/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -18,17 +22,16 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final FocusNode focusNode = FocusNode();
-  String mode = "idk"; // client, server
-  bool allowServerLogin = false;
-  final maxlen = 6;
-  String passkey = "";
-  final secretKey = "135246";
   bool anotherServerIsRunning = false;
   Timer? timer;
   int timerCounter = 0;
   late StreamSubscription<BuzzMsg>? streamSubscription;
+  List<BuzzMsg> msgs = [];
   List<String> data = [];
+  bool disable_S_HBQ = false;
+  bool disable_S_HBR = false;
+  bool disable_C_HBQ = false;
+  bool disable_C_HBR = false;
 
   @override
   void initState() {
@@ -62,16 +65,15 @@ class _HomeState extends State<Home> {
 
   resetAll() {
     setState(() {
-      passkey = "";
-      mode = "idk";
-      anotherServerIsRunning = false;
-      allowServerLogin = false;
       timerCounter = 0;
     });
   }
 
   onServerMessage(BuzzMsg msg) {
-    // Assert that there is no cross talk.
+    // TODO -  add reveiced date into the msg
+    msgs.add(msg);
+    if (isFiltered(msg)) return;
+
     final now = DateTime.now();
 
     String dt = DateFormat.Hms().format(now);
@@ -87,7 +89,67 @@ class _HomeState extends State<Home> {
     // TODO: implement build
     final child1 = MyGrid(data);
     final child2 = Text("2");
-    final child3 = Text("3");
+    final child3 = buildSettings();
     return Scaffold(body: MultiSplitView(children: [child1, child2, child3]));
   }
+
+  onS_HBQ(bool disable) {
+    setState(() {
+      disable_S_HBQ = disable;
+    });
+  }
+
+  onS_HBR(bool disable) {
+    setState(() {
+      disable_S_HBR = disable;
+    });
+  }
+
+  onC_HBQ(bool disable) {
+    setState(() {
+      disable_C_HBQ = disable;
+    });
+  }
+
+  onC_HBR(bool disable) {
+    setState(() {
+      disable_C_HBR = disable;
+    });
+  }
+
+  Widget buildSettings() {
+return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          WIDGETS.buildSwitch("disable_S_HBQ", disable_S_HBQ, onS_HBQ),
+          WIDGETS.buildSwitch("disable_S_HBR", disable_S_HBR, onS_HBR),
+          WIDGETS.buildSwitch("disable_C_HBQ", disable_C_HBQ, onC_HBQ),
+          WIDGETS.buildSwitch("disable_C_HBR", disable_C_HBR, onC_HBR)
+        ]);
+  }
+
+  filter() {
+    List<String> f = [];
+
+    for (BuzzMsg msg in msgs) {
+      if (isFiltered(msg)) {
+        f.add(msg.toString());
+      }
+    }
+
+    setState(() {
+      data = f;
+    });
+}
+
+  bool isFiltered(BuzzMsg msg) {
+    if (disable_S_HBQ && msg.source == BuzzCmd.server && msg.cmd == BuzzCmd.hbq) return true;
+    if (disable_S_HBR && msg.source == BuzzCmd.server && msg.cmd == BuzzCmd.hbr) return true;
+    if (disable_C_HBQ && msg.source == BuzzCmd.client && msg.cmd == BuzzCmd.hbq) return true;
+    if (disable_C_HBR && msg.source == BuzzCmd.client && msg.cmd == BuzzCmd.hbr) return true;
+
+    return false;
+  }
+
 }

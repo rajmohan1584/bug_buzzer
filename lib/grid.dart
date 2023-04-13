@@ -16,7 +16,7 @@ class MyGrid extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) {
             return Card(
               color: Colors.amber,
-              child: Center(child: Text(data[index])),
+              child: Text(data[index]),
             );
           }),
     );
