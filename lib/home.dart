@@ -6,6 +6,7 @@ import 'package:bug_buzzer/command.dart';
 import 'package:bug_buzzer/grid.dart';
 import 'package:bug_buzzer/log.dart';
 import 'package:bug_buzzer/message.dart';
+import 'package:bug_buzzer/server_direct.dart';
 import 'package:bug_buzzer/single_multicast.dart';
 import 'package:bug_buzzer/widgets.dart';
 import 'package:flutter/material.dart';
@@ -26,8 +27,12 @@ class _HomeState extends State<Home> {
   Timer? timer;
   int timerCounter = 0;
   late StreamSubscription<BuzzMsg>? streamSubscription;
+  late StreamSubscription<BuzzMsg>? webSocketStreamSubscription;
+
   List<BuzzMsg> msgs = [];
   List<String> data = [];
+  List<String> wsData = [];
+
   bool disable_S_HBQ = false;
   bool disable_S_HBR = false;
   bool disable_C_HBQ = false;
@@ -36,8 +41,12 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     startTimer();
+
     streamSubscription =
         StaticSingleMultiCast.controller1.stream.listen(onServerMessage);
+    webSocketStreamSubscription =
+        ServerDirectReceiver.webSocketQueue.stream.listen(onWebSocketMessage);
+
     super.initState();
   }
 
@@ -84,11 +93,26 @@ class _HomeState extends State<Home> {
     Log.log(s);
   }
 
+  onWebSocketMessage(BuzzMsg msg) {
+    // TODO -  add reveiced date into the msg
+    msgs.add(msg);
+    if (isFiltered(msg)) return;
+
+    final now = DateTime.now();
+
+    String dt = DateFormat.Hms().format(now);
+    final s = "$dt - ${msg.toSocketMsg()}";
+    setState(() {
+      wsData.insert(0, s);
+    });
+    Log.log(s);
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     final child1 = MyGrid(data);
-    final child2 = Text("2");
+    final child2 = MyGrid(wsData);
     final child3 = buildSettings();
     return Scaffold(body: MultiSplitView(children: [child1, child2, child3]));
   }

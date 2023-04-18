@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bug_buzzer/home.dart';
 import 'package:bug_buzzer/log.dart';
+import 'package:bug_buzzer/server_direct.dart';
 import 'package:bug_buzzer/single_multicast.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
@@ -35,6 +36,7 @@ void main() async {
   }
 
   StaticSingleMultiCast.initListener();
+  ServerDirectReceiver.start();
 
   runZonedGuarded(() {
     runApp(const MyApp());

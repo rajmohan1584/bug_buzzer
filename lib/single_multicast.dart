@@ -15,14 +15,24 @@ class StaticSingleMultiCast {
       StreamController<BuzzMsg>();
 
   static Future initListener() async {
-    final socket = await RawDatagramSocket.bind(
-      InternetAddress.anyIPv4,
-      port,
-      reuseAddress: true,
-      //reusePort: true,
-      //multicastLoopback: true,
-    );
-
+    late final RawDatagramSocket socket;
+    if (Platform.isMacOS) {
+      socket = await RawDatagramSocket.bind(
+        InternetAddress.anyIPv4,
+        port,
+        reuseAddress: true,
+        reusePort: true,
+        //multicastLoopback: true,
+      );
+    } else {
+      socket = await RawDatagramSocket.bind(
+        InternetAddress.anyIPv4,
+        port,
+        reuseAddress: true,
+        //reusePort: true,
+        //multicastLoopback: true,
+      );
+    }
     socket.joinMulticast(address);
 
     socket.listen((event) async {

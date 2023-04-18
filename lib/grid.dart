@@ -11,7 +11,7 @@ class MyGrid extends StatelessWidget {
       removeTop: true,
       child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 1, childAspectRatio: 10),
+              crossAxisCount: 1, childAspectRatio: 5),
           itemCount: data.length,
           itemBuilder: (BuildContext context, int index) {
             return Card(
